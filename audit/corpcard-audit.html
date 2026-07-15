@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>법인카드 자택인근 사용 점검 | 내부감사</title>
+<meta name="robots" content="noindex, nofollow" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="audit.css" />
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar__inner">
+    <div class="bar__title">
+      <span class="bar__badge">내부감사</span>
+      <h1>법인카드 자택인근 사용 점검</h1>
+    </div>
+    <p class="bar__desc">임직원 자택 좌표 기준 반경 내 법인카드 사용 내역을 탐지하고 카카오맵으로 시각화합니다. <strong>본 데이터는 감사 도구 검증용 가상(Synthetic) 데이터입니다.</strong></p>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Kakao Key Setup -->
+  <section class="panel key-panel" id="keyPanel">
+    <div class="panel__head">
+      <h2>카카오맵 JavaScript 키 설정</h2>
+      <span class="key-status" id="keyStatus">미설정</span>
+    </div>
+    <p class="panel__note">
+      지도 시각화를 위해 카카오 개발자센터에서 발급받은 <strong>JavaScript 키</strong>가 필요합니다.
+      (카카오 개발자센터 → 내 애플리케이션 → 앱 키 → JavaScript 키, Web 플랫폼에 현재 도메인 등록 필요)
+      키는 브라우저 로컬 저장소에만 보관되며 외부로 전송되지 않습니다. 키가 없어도 아래 표·통계 분석은 그대로 이용할 수 있습니다.
+    </p>
+    <div class="key-row">
+      <input type="password" id="kakaoKeyInput" placeholder="카카오 JavaScript 키 입력" autocomplete="off" />
+      <button class="btn btn--primary" id="saveKeyBtn">저장 후 지도 불러오기</button>
+      <button class="btn btn--ghost" id="clearKeyBtn">키 삭제</button>
+    </div>
+  </section>
+
+  <!-- Summary -->
+  <section class="summary" id="summary"></section>
+
+  <!-- Filters -->
+  <section class="panel filter-panel">
+    <div class="filter-row">
+      <div class="field">
+        <label for="empFilter">임직원</label>
+        <select id="empFilter"></select>
+      </div>
+      <div class="field">
+        <label for="radiusFilter">자택인근 판정 반경</label>
+        <select id="radiusFilter">
+          <option value="300">300m 이내</option>
+          <option value="500" selected>500m 이내</option>
+          <option value="1000">1km 이내</option>
+          <option value="2000">2km 이내</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="flagFilter">판정 상태</label>
+        <select id="flagFilter">
+          <option value="all">전체</option>
+          <option value="flagged">자택인근 의심만</option>
+          <option value="normal">정상만</option>
+        </select>
+      </div>
+      <div class="field field--grow">
+        <label for="searchInput">가맹점명 검색</label>
+        <input type="text" id="searchInput" placeholder="가맹점명으로 검색" />
+      </div>
+      <div class="field field--btn">
+        <button class="btn btn--ghost" id="exportBtn">의심 내역 CSV 내보내기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map -->
+  <section class="panel map-panel">
+    <div class="panel__head">
+      <h2>지도 시각화</h2>
+      <p class="legend">
+        <span class="legend__dot legend__dot--home"></span> 자택
+        <span class="legend__dot legend__dot--flag"></span> 자택인근 의심
+        <span class="legend__dot legend__dot--normal"></span> 정상 사용
+      </p>
+    </div>
+    <div id="map" class="map"></div>
+    <p class="map-placeholder" id="mapPlaceholder">카카오맵 JavaScript 키를 입력하면 지도가 표시됩니다.</p>
+  </section>
+
+  <!-- Employee master (editable home address) -->
+  <section class="panel">
+    <div class="panel__head">
+      <h2>임직원 자택주소 마스터</h2>
+      <span class="panel__note-inline">감사자가 확보한 자택 주소 목록 (데모 데이터 기준으로 사전 입력됨)</span>
+    </div>
+    <div class="table-wrap table-wrap--sm">
+      <table id="empTable">
+        <thead>
+          <tr><th>사번</th><th>이름</th><th>직급</th><th>부서</th><th>카드번호</th><th>자택 주소(등록)</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Transactions table -->
+  <section class="panel">
+    <div class="panel__head">
+      <h2>거래 내역</h2>
+      <span class="panel__note-inline" id="rowCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="txTable">
+        <thead>
+          <tr>
+            <th data-sort="No">No</th>
+            <th data-sort="UserName">사용자</th>
+            <th data-sort="TransactionDate">거래일시</th>
+            <th data-sort="MerchantName">가맹점명</th>
+            <th>가맹점주소</th>
+            <th data-sort="MerchantIndustryName">업종</th>
+            <th data-sort="UsageType">사용유형</th>
+            <th data-sort="TransactionAmount">거래금액</th>
+            <th data-sort="distance">자택거리</th>
+            <th data-sort="flagged">판정</th>
+          </tr>
+        </thead>
+        <tbody id="txTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p>본 페이지는 내부감사 목적의 검증용 도구이며, 표시되는 법인카드 거래 데이터는 실제 데이터가 아닌 가상 생성 데이터입니다.</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="audit.js"></script>
+</body>
+</html>
