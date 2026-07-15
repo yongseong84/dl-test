@@ -2,6 +2,10 @@
   'use strict';
 
   var KEY_STORAGE = 'corpcardAudit.kakaoJsKey';
+  // 카카오 개발자센터에서 발급받은 JavaScript 키의 기본값입니다.
+  // 이 키를 사용하려면 카카오 개발자센터 > 내 애플리케이션 > 플랫폼 설정 > Web 플랫폼에
+  // 이 페이지가 서비스되는 도메인을 등록해야 합니다.
+  var DEFAULT_KAKAO_KEY = 'f03c262b08eaea9cdc8753819b04b642';
 
   var state = {
     employees: EMPLOYEES.map(function (e) { return Object.assign({}, e); }),
@@ -335,7 +339,10 @@
   }
 
   function tryLoadStoredKey() {
-    var key = localStorage.getItem(KEY_STORAGE);
+    var stored = localStorage.getItem(KEY_STORAGE);
+    // null = 사용자가 아직 아무 설정도 하지 않음 -> 기본 키 사용
+    // '' (빈 문자열) = 사용자가 명시적으로 키를 삭제함 -> 지도 비활성 상태 유지
+    var key = stored === null ? DEFAULT_KAKAO_KEY : stored;
     if (!key) return;
     document.getElementById('kakaoKeyInput').value = key;
     loadKakaoSDK(key).then(function () {
@@ -361,7 +368,7 @@
   });
 
   document.getElementById('clearKeyBtn').addEventListener('click', function () {
-    localStorage.removeItem(KEY_STORAGE);
+    localStorage.setItem(KEY_STORAGE, '');
     document.getElementById('kakaoKeyInput').value = '';
     setKeyStatus(false);
     location.reload();
